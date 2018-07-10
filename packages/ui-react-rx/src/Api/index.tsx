@@ -25,16 +25,20 @@ type State = ApiProps & {
   subscriptions: Array<any> // rxjs$ISubscription | null>;
 };
 
-export function shouldUseLatestChain(chain?: string): boolean {
+export function shouldUseLatestChain(chain?: string, wsUrl?: string): boolean {
   if (typeof chain === 'undefined') return false;
   const re = new RegExp("(poc-1)", "i");
-  const match = re.test(chain.toLowerCase());
-  if (match) return false;
+  if (typeof wsUrl !== 'undefined' && wsUrl != '') {
+    const matchUrl = re.test(wsUrl.toLowerCase());
+    return matchUrl ? false : true;
+  }
+  const matchChainSpec = re.test(chain.toLowerCase());
+  if (matchChainSpec) return false;
   return true;
 }
 
-function apiSupport (chain?: string): EncodingVersions {
-  return shouldUseLatestChain(chain) ? 'latest' : 'poc-1';
+function apiSupport (chain?: string, wsUrl?: string): EncodingVersions {
+  return shouldUseLatestChain(chain, wsUrl) ? 'latest' : 'poc-1';
 }
 
 export default class Api extends React.PureComponent<Props, State> {
@@ -81,6 +85,7 @@ export default class Api extends React.PureComponent<Props, State> {
 
   updateSubscriptions () {
     const { api } = this.state;
+    const { url = '' } = this.props;
 
     this.unsubscribe();
     this.setState({
@@ -90,7 +95,7 @@ export default class Api extends React.PureComponent<Props, State> {
             this.setState({ apiConnected: !!isConnected });
           }),
           () => api.system.chain().subscribe((chain?: string) => {
-            this.setState({ apiSupport: apiSupport(chain) });
+            this.setState({ apiSupport: apiSupport(chain, url) });
           })
         ].map((fn: Function) => {
           try {
