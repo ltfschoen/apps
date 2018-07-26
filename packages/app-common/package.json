@@ -1,0 +1,21 @@
+{
+  "name": "@polkadot/app-common",
+  "version": "0.19.5",
+  "author": "Parity Technologies Ltd. <admin@parity.io>",
+  "license": "GPL-3.0",
+  "description": "Shared utils and types for backend and frontend",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "engines": {
+    "node": ">=9.5"
+  },
+  "scripts": {
+    "build": "polkadot-dev-build-babel",
+    "check": "stylelint 'src/**/*.css' && eslint src && flow check",
+    "test": "jest --coverage"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.0.0-beta.51",
+    "@polkadot/ui-app": "^0.19.5"
+  }
+}

@@ -27,6 +27,7 @@
     "@polkadot/app-telemetry": "^0.19.5",
     "@polkadot/app-toolbox": "^0.19.5",
     "@polkadot/app-vanitygen": "^0.19.5",
+    "@polkadot/app-common": "^0.19.5",
     "@polkadot/ui-app": "^0.19.5",
     "@polkadot/ui-signer": "^0.19.5"
   },
