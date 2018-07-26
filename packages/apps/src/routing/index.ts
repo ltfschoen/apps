@@ -13,6 +13,7 @@ import extrinsics from './extrinsics';
 import rpc from './rpc';
 // import settings from './settings';
 import storage from './storage';
+import telemetry from './telemetry';
 import toolbox from './toolbox';
 import unknown from './unknown';
 import vanitygen from './vanitygen';
@@ -20,7 +21,7 @@ import vanitygen from './vanitygen';
 export default ({
   default: 'explorer',
   routes: ([] as Routes).concat(
-    example, explorer, extrinsics, storage, null, accounts, addresses, vanitygen, null, rpc, toolbox
+    example, explorer, extrinsics, storage, null, accounts, addresses, telemetry, vanitygen, null, rpc, toolbox
   ),
   unknown
 } as Routing);

@@ -1,6 +1,6 @@
 {
   "name": "@polkadot/app-telemetry",
-  "version": "0.1.0",
+  "version": "0.19.5",
   "main": "index.js",
   "repository": "https://github.com/polkadot-js/apps.git",
   "author": "Parity Technologies Ltd. <admin@parity.io>",
