@@ -7,7 +7,7 @@ import { TranslationFunction } from 'i18next';
 
 import isString from '@polkadot/util/is/string';
 
-import { maxValue } from '../util/chainSpec';
+import { checkValueBitLength, maxValue } from '../util/chainSpec';
 import { BIT_LENGTH_128 } from '../constants';
 import { IsValidWithMessage } from './types';
 import scientificNotationToNumber from './scientificNotationToNumber';
@@ -16,6 +16,9 @@ import scientificNotationToNumber from './scientificNotationToNumber';
 const reValidInputChars = RegExp('^[0-9\e\+\.]+[0-9\e\+\.]*$');
 
 export default function isValidBalance (input: any, t: TranslationFunction, bitLength?: number): IsValidWithMessage {
+  const inputBN = new BN(input);
+  const maxBN = maxValue(bitLength);
+
   bitLength = bitLength || BIT_LENGTH_128;
 
   let errorMessageKey: string = '';
@@ -36,6 +39,8 @@ export default function isValidBalance (input: any, t: TranslationFunction, bitL
       }),
       errorMessageUntranslated
     };
+
+    console.log('NAN');
   }
 
   // always a string from <input type='number'> but leave as failsafe
@@ -108,6 +113,23 @@ export default function isValidBalance (input: any, t: TranslationFunction, bitL
     };
   }
 
+  // const s = [];
+
+  // if (input.indexOf('e') !== -1) {
+  //   s = input.split('e');
+  // } else if (input.indexOf('e+') !== -1) {
+  //   s = input.split('e+');
+  // }
+
+  // new BN(input);
+  // (new BN('123456789')).mul(new BN('10')).pow(new BN('11')).bitLength() // toString(10)
+
+
+  // if (checkValueBitLength(inputBN, bitLength) === false) {
+  //   throw new Error('ERROR');
+  // }
+
+
   // check value is not decimal and greater than or equal to one, whether it be scientific notation, exponential (which allow decimal)
   if (Number(parseFloat(input)) < 1 && Number(parseFloat(input)) !== 0) {
     errorMessageKey = 'balance.error.decimal';
@@ -163,9 +185,6 @@ export default function isValidBalance (input: any, t: TranslationFunction, bitL
       errorMessageUntranslated
     };
   }
-
-  const maxBN = maxValue(bitLength);
-  const inputBN = new BN(input);
 
   if (!inputBN.lt(maxBN)) {
     errorMessageKey = 'balance.error.above.max';

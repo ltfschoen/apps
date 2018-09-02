@@ -11,11 +11,11 @@ import React from 'react';
 import withApi from '@polkadot/ui-react-rx/with/api';
 
 import isValidBalance from '../../util/isValidBalance';
-import { defaultMaxLength } from '../../util/chainSpec';
+import { checkValueBitLength, defaultMaxLength } from '../../util/chainSpec';
 import { keydown, keyup } from '../../util/keyboard';
 import InputNumber from '../../InputNumber';
 import translate from '../../translate';
-import { KEYS_ALLOWED, KEYS_PRE } from '../../constants';
+import { BIT_LENGTH_128, KEYS_ALLOWED, KEYS_PRE } from '../../constants';
 import Bare from './Bare';
 
 type Props = I18nProps & ApiProps & BareProps;
@@ -166,6 +166,16 @@ class Balance extends React.PureComponent<Props, State> {
     // if user inputs the value of 'E', replace it with lowercase 'e'
     if (keyup.isExistE(event)) {
       event.target.value = event.target.value.replace(/E+/gi, 'e');
+    }
+
+    console.log('INPUT', event.target.value)
+    const inputBN = new BN(event.target.value);
+
+    console.log('PRE-ERROR')
+// must run isValidBalance first somehow
+    if (checkValueBitLength(inputBN, BIT_LENGTH_128) === false) {
+      console.log('ERROR')
+      throw new Error('ERROR');
     }
   }
 }

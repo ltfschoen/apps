@@ -14,6 +14,14 @@ describe('checks extrinsic balance', () => {
     t = translate;
   });
 
+  it('does not throw an error if input value for comparison is byte array longer than desired length', () => {
+    const invalidInputValueType = '123456789e12';
+
+    expect(() => {
+      isValidBalance(invalidInputValueType, t, BIT_LENGTH_128);
+    }).not.toThrow();
+  });
+
   it('throws an error if input value for comparison is not a string', () => {
     const invalidInputValueType = 340282366920938463463374607431768211456;
 
