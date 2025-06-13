@@ -3,10 +3,12 @@
 
 import type { DeriveReferendumExt } from '@polkadot/api-derive/types';
 
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import { Table } from '@polkadot/react-components';
+import { useApi } from '@polkadot/react-hooks';
 
+import { logComponent } from '../debugLogger.js';
 import { useTranslation } from '../translate.js';
 import Referendum from './Referendum.js';
 
@@ -17,6 +19,21 @@ interface Props {
 
 function Referendums ({ className = '', referendums }: Props): React.ReactElement<Props> {
   const { t } = useTranslation();
+  const { api } = useApi();
+  const referendumsCount = useRef(0);
+
+  // Track referendums list changes
+  // Log when referendums data is received
+  useEffect(() => {
+    logComponent('Referendums.tsx: data received', {
+      apiConnected: api.isConnected,
+      count: referendums?.length || 0,
+      ids: referendums?.map((r) => r.index.toString()),
+      refCount: referendumsCount.current
+    });
+
+    referendumsCount.current++;
+  }, [api.isConnected, referendums, referendumsCount]);
 
   const headerRef = useRef<([React.ReactNode?, string?, number?] | false)[]>([
     [t('referenda'), 'start', 2],
@@ -29,18 +46,27 @@ function Referendums ({ className = '', referendums }: Props): React.ReactElemen
     [undefined, undefined, 2]
   ]);
 
+  // Log render state using our debug logger instead of console.log
+  logComponent('Referendums component rendering', {
+    count: referendums?.length || 0
+  });
+
   return (
     <Table
       className={className}
       empty={referendums && t('No active referendums')}
       header={headerRef.current}
     >
-      {referendums?.map((referendum): React.ReactNode => (
-        <Referendum
-          key={referendum.index.toString()}
-          value={referendum}
-        />
-      ))}
+      {referendums?.map((referendum): React.ReactNode => {
+        logComponent(`Rendering referendum: ${referendum.index.toString()}`);
+
+        return (
+          <Referendum
+            key={referendum.index.toString()}
+            value={referendum}
+          />
+        );
+      })}
     </Table>
   );
 }

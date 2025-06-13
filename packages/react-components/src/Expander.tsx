@@ -3,11 +3,11 @@
 
 import type { Text } from '@polkadot/types';
 
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { useToggle } from '@polkadot/react-hooks';
 
-import Icon from './Icon.js';
+import ExpandButton from './ExpandButton.js';
 import { styled } from './styled.js';
 
 interface Meta {
@@ -17,6 +17,7 @@ interface Meta {
 export interface Props {
   children?: React.ReactNode;
   className?: string;
+  debugId?: string;
   isOpen?: boolean;
   isHeader?: boolean;
   isLeft?: boolean;
@@ -61,8 +62,23 @@ function formatMeta (meta?: Meta): [React.ReactNode, React.ReactNode] | null {
   ];
 }
 
-function Expander ({ children, className = '', isHeader, isLeft, isOpen, isPadded, onClick, renderChildren, summary, summaryHead, summaryMeta, summarySub, withBreaks, withHidden }: Props): React.ReactElement<Props> {
+function Expander ({ children, className = '', debugId, isHeader, isLeft, isOpen, isPadded, onClick, renderChildren, summary, summaryHead, summaryMeta, summarySub, withBreaks, withHidden }: Props): React.ReactElement<Props> {
   const [isExpanded, toggleExpanded] = useToggle(isOpen, onClick);
+
+  // Explicitly track expanded state changes for debugging
+  console.log('%c Expander state:', 'background: #3498db; color: white; font-size: 12px', { debugId, isExpanded });
+
+  // Add a very visible warning to definitely show in console
+  console.warn('🔵🔵🔵 EXPANDER COMPONENT RENDER 🔵🔵🔵', { debugId, isExpanded });
+
+  // Handle click in a controlled manner - this will be passed to ExpandButton
+  const handleToggleClick = useCallback(() => {
+    console.log('%c Expander handleToggleClick - Current state:', 'background: #3498db; color: white; font-size: 12px', {
+      beforeToggle: isExpanded,
+      willBecome: !isExpanded
+    });
+    toggleExpanded();
+  }, [isExpanded, toggleExpanded]);
 
   const demandChildren = useMemo(
     () => isExpanded && renderChildren && renderChildren(),
@@ -79,22 +95,20 @@ function Expander ({ children, className = '', isHeader, isLeft, isOpen, isPadde
     [children, renderChildren]
   );
 
-  const icon = useMemo(
-    () => (
-      <Icon
-        color={
-          hasContent
-            ? undefined
-            : 'transparent'
-        }
-        icon={
-          isExpanded
-            ? 'caret-up'
-            : 'caret-down'
-        }
-      />
-    ),
-    [hasContent, isExpanded]
+  // Use the ExpandButton component directly for better integration
+  const iconButton = useMemo(
+    () => {
+      console.warn('🔵🔵🔵 Creating ExpandButton inside Expander 🔵🔵🔵', { debugId, isExpanded });
+
+      return (
+        <ExpandButton
+          expanded={isExpanded}
+          onClick={handleToggleClick}
+          referendumIndex={debugId}
+        />
+      );
+    },
+    [debugId, handleToggleClick, isExpanded]
   );
 
   return (
@@ -103,7 +117,7 @@ function Expander ({ children, className = '', isHeader, isLeft, isOpen, isPadde
         className={`ui--Expander-summary${isLeft ? ' isLeft' : ''}`}
         onClick={toggleExpanded}
       >
-        {isLeft && icon}
+        {isLeft && iconButton}
         <div className='ui--Expander-summary-header'>
           <div className='ui--Expander-summary-title'>
             {summaryHead}
@@ -113,7 +127,7 @@ function Expander ({ children, className = '', isHeader, isLeft, isOpen, isPadde
             <div className='ui--Expander-summary-header-sub'>{isExpanded ? headerSub : headerSubMini}</div>
           )}
         </div>
-        {!isLeft && icon}
+        {!isLeft && iconButton}
       </div>
       {hasContent && (isExpanded || withHidden) && (
         <div className='ui--Expander-content'>{children || demandChildren}</div>
