@@ -19,14 +19,31 @@ interface Props {
   count: number;
   isAye: boolean;
   isWinning: boolean;
+  referendumId: string; // Added referendumId to help with debugging
   total: BN;
   votes: DeriveReferendumVote[];
 }
 
 const LOCKS = [1, 10, 20, 30, 40, 50, 60];
 
-function ReferendumVotes ({ className, count, isAye, total, votes }: Props): React.ReactElement<Props> | null {
+function ReferendumVotes ({ className, count, isAye, referendumId, total, votes }: Props): React.ReactElement<Props> | null {
   const { t } = useTranslation();
+
+  // Force explicit strictness on referendumId verification
+  const refId = referendumId || 'ERROR-MISSING';
+
+  // Always log in ReferendumVotes since this component is only used for referendum rows
+  const isReferendumRow = true;
+
+  // Conditional logging only for referendum rows
+  if (isReferendumRow) {
+    console.warn('🟠🟠🟠 ReferendumVotes 🟠🟠🟠', {
+      component: 'ReferendumVotes',
+      isAye,
+      refId,
+      voteCount: votes?.length || 0
+    });
+  }
 
   const sorted = useMemo(
     () => votes.sort((a, b) => {
@@ -51,6 +68,7 @@ function ReferendumVotes ({ className, count, isAye, total, votes }: Props): Rea
   return (
     <ExpanderScroll
       className={className}
+      referendumId={refId}
       empty={votes && t('No voters')}
       // help={change.gtn(0) && (
       //   <>

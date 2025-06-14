@@ -421,22 +421,40 @@ function Referendum ({ className = '', value: { allAye, allNay, image, imageHash
           )}
         </td>
         <td className='expand'>
-          <ReferendumVotes
-            change={changeAye}
-            count={voteCountAye}
-            isAye
-            isWinning={isPassing}
-            total={votedAye}
-            votes={allAye}
-          />
-          <ReferendumVotes
-            change={changeNay}
-            count={voteCountNay}
-            isAye={false}
-            isWinning={!isPassing}
-            total={votedNay}
-            votes={allNay}
-          />
+          {(() => {
+            const refId = index.toString();
+
+            console.warn('🔴🔴🔴 REFERENDUM SOURCE 🔴🔴🔴 Passing referendumId to ReferendumVotes:', refId);
+
+            return (
+              <ReferendumVotes
+                change={changeAye}
+                count={voteCountAye}
+                isAye
+                isWinning={isPassing}
+                referendumId={refId}
+                total={votedAye}
+                votes={allAye}
+              />
+            );
+          })()}
+          {(() => {
+            const refId = index.toString();
+
+            console.warn('🔴🔴🔴 REFERENDUM SOURCE 🔴🔴🔴 Passing referendumId to ReferendumVotes (nay):', refId);
+
+            return (
+              <ReferendumVotes
+                change={changeNay}
+                count={voteCountNay}
+                isAye={false}
+                isWinning={!isPassing}
+                referendumId={refId}
+                total={votedNay}
+                votes={allNay}
+              />
+            );
+          })()}
         </td>
         <td className='media--1000 middle chart'>
           <Progress

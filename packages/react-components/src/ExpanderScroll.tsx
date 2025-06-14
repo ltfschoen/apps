@@ -9,9 +9,10 @@ import Table from './Table/index.js';
 import Expander from './Expander.js';
 import { styled } from './styled.js';
 
-interface Props extends ExpanderProps {
+interface Props extends Omit<ExpanderProps, 'renderChildren'> {
   empty?: string;
-  renderChildren?: (() => React.ReactNode[] | undefined | null) | null;
+  referendumId?: string;
+  renderChildren?: (() => React.ReactNode | undefined | null) | null;
 }
 
 function mapRow (row: React.ReactNode, key: number): React.ReactNode {
@@ -22,7 +23,16 @@ function mapRow (row: React.ReactNode, key: number): React.ReactNode {
   );
 }
 
-function ExpanderScroll ({ children, className, empty, renderChildren, summary }: Props): React.ReactElement<Props> {
+function ExpanderScroll ({ children, className, empty, referendumId, renderChildren, summary }: Props): React.ReactElement<Props> {
+  // Force strict referendumId handling
+  const refId = referendumId || 'EXPANDER-SCROLL-MISSING';
+
+  // Add enhanced debugging with component name for tracing
+  console.warn('🟣🟣🟣 EXPANDER-SCROLL 🟣🟣🟣', {
+    component: 'ExpanderScroll',
+    refId,
+    summary: summary ? 'has summary' : 'no summary'
+  });
   const hasContent = useMemo(
     () => !!(renderChildren || children),
     [children, renderChildren]
@@ -36,7 +46,15 @@ function ExpanderScroll ({ children, className, empty, renderChildren, summary }
           isInline
         >
           {renderChildren
-            ? renderChildren()?.map(mapRow)
+            ? (() => {
+              const rendered = renderChildren();
+
+              return Array.isArray(rendered)
+                ? rendered.map(mapRow)
+                : rendered !== null && rendered !== undefined
+                  ? <tr><td>{rendered}</td></tr>
+                  : null;
+            })()
             : Array.isArray(children)
               ? children.map(mapRow)
               : <tr><td>{children}</td></tr>
@@ -50,13 +68,40 @@ function ExpanderScroll ({ children, className, empty, renderChildren, summary }
   return (
     <StyledExpander
       className={className}
+      referendumId={refId}
       renderChildren={hasContent ? innerRender : undefined}
       summary={summary}
     />
   );
 }
 
-const StyledExpander = styled(Expander)`
+// Create a wrapper component that explicitly forwards the referendumId prop
+const ExpanderWithForwardedProps = ({ className, referendumId, ...props }: Props): React.ReactElement<Props> => {
+  // Ensure strict prop handling with fallback
+  const refId = referendumId || 'FORWARDED-EXPANDER-MISSING';
+
+  // Use class detection for referendum rows - consistent with other components
+  const isReferendumRow = className?.includes('ui--Expander') === true && referendumId !== 'FORWARDED-EXPANDER-MISSING';
+
+  // Conditional logging only for referendum rows
+  if (isReferendumRow) {
+    console.warn('🪳🪳🪳 FORWARDING PROPS IN STYLED WRAPPER 🪳🪳🪳', {
+      component: 'ExpanderWithForwardedProps',
+      originalRefId: referendumId,
+      refId
+    });
+  }
+
+  return (
+    <Expander
+      className={className}
+      referendumId={refId}
+      {...props}
+    />
+  );
+};
+
+const StyledExpander = styled(ExpanderWithForwardedProps)`
   .tableContainer {
     overflow-y: scroll;
     display: block;

@@ -1,7 +1,7 @@
 // Copyright 2017-2025 @polkadot/react-components authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 
 import Icon from './Icon.js';
 import { styled } from './styled.js';
@@ -17,28 +17,50 @@ interface Props {
 }
 
 function ExpandButton ({ className = '', expanded, onClick, referendumIndex }: Props): React.ReactElement<Props> {
-  // This log should definitely appear in all circumstances
-  console.warn('🔴🔴🔴 ExpandButton COMPONENT RENDER 🔴🔴🔴', { expanded, referendumIndex });
+  // Create a unique ID for this component instance to trace render cycles
+  const instanceId = useMemo(() => Math.random().toString(36).substring(2, 8), []);
+
+  // Ensure there's always a valid string to use, even if undefined
+  const debugIndex = referendumIndex || 'MISSING-ID';
+
+  // FOCUS ON CSS CLASS: Look for ui--Table-Column-Expand class which is present in referendum rows
+  const isReferendumRow = className?.includes('ui--Table-Column-Expand') === true;
+
+  // Conditional logging only for referendum rows
+  if (isReferendumRow) {
+    // This log should be extremely visible with additional context information
+    console.warn('🔴🔴🔴 EXPAND-BUTTON 🔴🔴🔴', {
+      component: 'ExpandButton',
+      debugIndex,
+      expanded,
+      instanceId,
+      originalRefId: referendumIndex,
+      stack: new Error().stack?.split('\n')[1]?.trim()
+    });
+
+    // Log more visible current state info
+    console.log('%c ExpandButton State:', 'background: #2ecc71; color: white; font-size: 12px', {
+      debugIndex,
+      expanded,
+      instanceId
+    });
+  }
+
   // Keep track of last prop value to detect changes for debugging
   const lastExpandedRef = React.useRef(expanded);
 
   // Enhanced logging to ensure click events are visible
-  console.log('%c ExpandButton Current State:', 'background: #2ecc71; color: white; font-size: 12px', {
-    expanded,
-    fromParent: true,
-    referendumIndex: referendumIndex || 'unknown' // Log referendum index if available
-  });
-
-  // Simply forward the onClick event to the parent without stopping propagation
-  // This is critical - we're making this component fully controlled by its parent
   const handleClick = useCallback((e: React.MouseEvent) => {
-    // Enhanced logging for debugging purposes only
-    console.log('%c ExpandButton CLICKED:', 'background: #e74c3c; color: white; font-size: 14px', {
-      currentExpanded: expanded,
-      expectedNextState: !expanded,
-      referendumIndex: referendumIndex || 'unknown',
-      timestamp: new Date().toISOString()
-    });
+    // Only log for referendum rows
+    if (isReferendumRow) {
+      console.log('%c ExpandButton CLICKED:', 'background: #e74c3c; color: white; font-size: 14px', {
+        currentExpanded: expanded,
+        debugIndex, // Use our strict debugging ID
+        expectedNextState: !expanded,
+        instanceId,
+        timestamp: new Date().toISOString()
+      });
+    }
 
     // Simply call onClick without preventing default or stopping propagation
     // This allows the click to propagate to parent handlers if needed
@@ -65,11 +87,11 @@ function ExpandButton ({ className = '', expanded, onClick, referendumIndex }: P
         });
       }
     }, 10);
-  }, [expanded, onClick, referendumIndex]);
+  }, [debugIndex, expanded, instanceId, isReferendumRow, onClick, referendumIndex]);
 
   // Track prop changes for debugging purposes
   useEffect(() => {
-    if (lastExpandedRef.current !== expanded) {
+    if (lastExpandedRef.current !== expanded && isReferendumRow) {
       console.log('%c ExpandButton PROP CHANGED:', 'background: #9b59b6; color: white; font-size: 12px', {
         from: lastExpandedRef.current,
         timestamp: new Date().toISOString(),
@@ -86,7 +108,7 @@ function ExpandButton ({ className = '', expanded, onClick, referendumIndex }: P
 
       lastExpandedRef.current = expanded;
     }
-  }, [expanded, referendumIndex]);
+  }, [expanded, isReferendumRow, referendumIndex]);
 
   // Setup global debug helper on mount only
   useEffect(() => {
@@ -113,9 +135,11 @@ function ExpandButton ({ className = '', expanded, onClick, referendumIndex }: P
 
   return (
     <StyledDiv
-      className={`${className} ui--ExpandButton`}
-      data-expanded={expanded.toString()}
-      data-testid='row-toggle'
+      className={`ui--ExpandButton ${className}`}
+      data-instance-id={instanceId} /* Unique instance ID for tracing */
+      data-ref-expanded={expanded.toString()} /* Track expanded state in DOM */
+      data-ref-id={debugIndex} /* Debugging attribute to make ID visible in DOM */
+      data-testid='toggle-expander'
       onClick={handleClick}
     >
       <Icon
@@ -127,7 +151,7 @@ function ExpandButton ({ className = '', expanded, onClick, referendumIndex }: P
   );
 }
 
-const StyledDiv = styled.div`
+const StyledDiv = styled('div')`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -136,6 +160,22 @@ const StyledDiv = styled.div`
   border: 1px solid var(--border-table);
   border-radius: 4px;
   cursor: pointer;
+  position: relative; /* To allow absolute positioning of debug elements */
+
+  &::after {
+    content: attr(data-ref-id); /* Show the referendumId in the DOM for debugging */
+    position: absolute;
+    top: -16px;
+    right: 0;
+    font-size: 9px;
+    background: rgba(255, 0, 0, 0.1);
+    border-radius: 2px;
+    padding: 0 2px;
+    color: #ff5722;
+    opacity: 0.5;
+    pointer-events: none;
+    display: var(--debug-display, none); /* Control with CSS var */
+  }
 
   /* Ensure the entire area is clickable */
   & .clickable-icon {

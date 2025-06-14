@@ -17,12 +17,12 @@ interface Meta {
 export interface Props {
   children?: React.ReactNode;
   className?: string;
-  debugId?: string;
   isOpen?: boolean;
   isHeader?: boolean;
   isLeft?: boolean;
   isPadded?: boolean;
   onClick?: (isOpen: boolean) => void;
+  referendumId?: string;
   renderChildren?: (() => React.ReactNode | undefined | null) | null;
   summary?: React.ReactNode;
   summaryHead?: React.ReactNode;
@@ -62,23 +62,59 @@ function formatMeta (meta?: Meta): [React.ReactNode, React.ReactNode] | null {
   ];
 }
 
-function Expander ({ children, className = '', debugId, isHeader, isLeft, isOpen, isPadded, onClick, renderChildren, summary, summaryHead, summaryMeta, summarySub, withBreaks, withHidden }: Props): React.ReactElement<Props> {
+function Expander ({ children, className = '', isHeader, isLeft, isOpen, isPadded, onClick, referendumId, renderChildren, summary, summaryHead, summaryMeta, summarySub, withBreaks, withHidden }: Props): React.ReactElement<Props> {
+  // Force strict referendumId handling with fallback - CRITICAL to prevent undefined values
+  const refId = referendumId || 'EXPANDER-MISSING-ID';
+
+  // Look for ui--Table class which is present in referendum table containers
+  // This approach uses DOM structure to identify referendum rows rather than relying on ID format
+  const isReferendumRow = className?.includes('ui--Table') === true || referendumId !== 'EXPANDER-MISSING-ID';
+
+  // Conditional logging only for referendum rows
+  if (isReferendumRow) {
+    // Enhanced debugging with stack trace to identify the call site
+    console.warn('🔵🔵🔵 EXPANDER COMPONENT 🔵🔵🔵', {
+      component: 'Expander',
+      originalRefId: referendumId,
+      refId,
+      // Add stack trace to help identify exact component instance
+      stack: new Error().stack?.split('\n').slice(1, 3).join(' → ')
+    });
+
+    // Full props logging for debugging
+    console.debug('Expander full props:', {
+      children: !!children,
+      className,
+      isOpen,
+      onClick: !!onClick,
+      refId,
+      renderChildren: !!renderChildren,
+      summary: !!summary
+    });
+  }
+
   const [isExpanded, toggleExpanded] = useToggle(isOpen, onClick);
 
-  // Explicitly track expanded state changes for debugging
-  console.log('%c Expander state:', 'background: #3498db; color: white; font-size: 12px', { debugId, isExpanded });
+  // Explicitly track expanded state changes for debugging - only for referendum rows
+  if (isReferendumRow) {
+    console.log('%c Expander state:', 'background: #3498db; color: white; font-size: 12px', { isExpanded, referendumId });
 
-  // Add a very visible warning to definitely show in console
-  console.warn('🔵🔵🔵 EXPANDER COMPONENT RENDER 🔵🔵🔵', { debugId, isExpanded });
+    // Add a very visible warning to definitely show in console
+    console.warn('🔵🔵🔵 EXPANDER COMPONENT RENDER 🔵🔵🔵', { isExpanded, referendumId });
+  }
 
   // Handle click in a controlled manner - this will be passed to ExpandButton
   const handleToggleClick = useCallback(() => {
-    console.log('%c Expander handleToggleClick - Current state:', 'background: #3498db; color: white; font-size: 12px', {
-      beforeToggle: isExpanded,
-      willBecome: !isExpanded
-    });
+    // Log only for referendum rows
+    if (isReferendumRow) {
+      console.log('%c Expander handleToggleClick - Current state:', 'background: #3498db; color: white; font-size: 12px', {
+        beforeToggle: isExpanded,
+        willBecome: !isExpanded
+      });
+    }
+
     toggleExpanded();
-  }, [isExpanded, toggleExpanded]);
+  }, [isExpanded, isReferendumRow, toggleExpanded]);
 
   const demandChildren = useMemo(
     () => isExpanded && renderChildren && renderChildren(),
@@ -98,17 +134,21 @@ function Expander ({ children, className = '', debugId, isHeader, isLeft, isOpen
   // Use the ExpandButton component directly for better integration
   const iconButton = useMemo(
     () => {
-      console.warn('🔵🔵🔵 Creating ExpandButton inside Expander 🔵🔵🔵', { debugId, isExpanded });
+      console.warn('🔵🔵🔵 Creating ExpandButton inside Expander 🔵🔵🔵', {
+        component: 'ExpandButton-Creator',
+        isExpanded,
+        refId
+      });
 
       return (
         <ExpandButton
           expanded={isExpanded}
           onClick={handleToggleClick}
-          referendumIndex={debugId}
+          referendumIndex={refId}
         />
       );
     },
-    [debugId, handleToggleClick, isExpanded]
+    [handleToggleClick, isExpanded, refId]
   );
 
   return (
